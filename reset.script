@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo "RESET: removing output/* process/* SPSS_syntax/*"
+
+rm output/* process/* SPSS_syntax/* input/* raw_data/* check/*
+
+echo "RESET done"
+
+

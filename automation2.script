@@ -1,0 +1,10 @@
+#!/bin/bash
+
+
+echo "Processing Beta from SPSS cox regression output"
+
+./script/cox_result.script
+
+./script/japBeta.script
+
+echo "Finish automation2.script: go to SPSS for performing Logistic Regression"

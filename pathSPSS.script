@@ -1,0 +1,14 @@
+#!/bin/bash
+
+OUTFILE="C:\Users\irvanda\Downloads\output2.sav"
+echo "Path for saving SPSS variable $OUTFILE"
+
+OUTFILE2="C:\Users\irvanda\Downloads\korean_cox_output.txt"
+echo "Path for output file from SPSS: $OUTFILE2"
+
+INFILE="C:\Users\irvanda\Downloads\1000_korean_genotype_cox"
+echo "Path for input file SPSS: $INFILE"
+
+export OUTFILE OUTFILE2 INFILE
+
+./script/spss.script

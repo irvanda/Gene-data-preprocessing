@@ -1,0 +1,53 @@
+====================
+== How to use  =====
+====================
+
+1. Input File:
+  - Put Korean genotype file in input folder with the name:
+	korean_genotype.bed
+	korean_genotype.bim
+	korean_genotype.fam
+  - Put Japanese genotype file in input folder with the name:
+        japanese_genotype.bed
+        japanese_genotype.bim
+        japanese_genotype.fam
+  - Put korean_age file in input folder with the name:
+	korean_age.txt
+
+2. Raw File:
+  - You can put korean and japanese genotype in raw_data folder before renaming the file.
+  - put your annotation file here and rename it into "annot.csv"
+
+3. Change directory path to save your file in SPSS in "pathSPSS.script"
+  - OUTFILE 	--> to save the variable. do not change!
+  - OUTFILE2 	--> to save the output file. Make sure to not change the name, just change the directory path.
+		    the name should be "korean_cox_output.txt"
+  - INFILE 	--> to get the input file in output/1000_korean_genotype_cox.
+		    change the directory path into your SPSS directory path.
+
+4. Run the automation1.script by:
+
+	./automation1.script
+  
+  - output: 
+	SPSS_syntax/cox_syntax.sps
+	output/1000_korean_genotype_cox 
+
+5. Put the syntax file and input file in your SPSS folder.
+
+6. Run the cox_syntax.sps by run All command in SPSS syntax editor.
+
+  - output:
+	korean_cox_output.txt
+
+7. Put the output file "korean_cox_output.txt" to output folder in linux.
+
+8. Run the automation2.script by:
+
+	./automation2.script
+
+  - output:
+	output/japan_cox_new
+	output/japan_simple_new
+
+9. Run Logistic Regression with input file "japan_simple_new" and "japan_cox_new".
