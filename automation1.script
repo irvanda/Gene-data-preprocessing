@@ -1,0 +1,238 @@
+#!/bin/bash
+
+clear 
+
+echo "The script starts now."
+
+echo "Simple logistic with Korean Genotype"
+
+plink/plink --noweb --bfile input/korean_genotype --logistic --out process/tmp1
+
+rm process/*.log process/*.nosex
+ 
+mv process/tmp1.assoc.logistic process/tmp1
+
+echo "Selecting SNPs with P-value < 0.005"
+
+awk '$9 < 0.005 {print $2"\t"$7"\t"$9}' process/tmp1 > process/tmp2
+
+sort -g -k 3 process/tmp2 > process/tmp2_sorted
+
+./script/deleteDuplicateGene.script
+
+echo "Selecting top 200 SNPs"
+
+awk 'FNR <= 200' output/output_remove_duplication_sorted > process/tmp1
+
+echo "Creating beta"
+
+awk -F"\t" '{a = log($3); printf("%0.4f\n",a)}' process/tmp1 > process/tmp2_beta
+
+awk -F"\t" '{print $1}' process/tmp1 > process/tmp2_snp
+
+cp process/tmp2_snp output/simple_200
+
+echo "Extracting individual data of japanese genotype"
+
+plink/plink --noweb --bfile input/japanese_genotype --extract output/simple_200 --recodeA --out process/tmp3
+
+mv process/tmp3.raw process/tmp3
+
+rm process/*.log process/*.nosex
+
+echo "removing unnecessary column"
+
+cut -d ' ' -f 7- process/tmp3 > process/tmp4
+
+cut -d ' ' -f 1,2,5,6 process/tmp3 > process/tmp4_id
+
+echo "sorting the raw file by snp"
+
+awk '
+{
+    for (i=1; i<=NF; i++)  {
+        a[NR,i] = $i
+    }
+}
+NF>p { p = NF }
+END {
+    for(j=1; j<=p; j++) {
+        str=a[1,j]
+        for(i=2; i<=NR; i++){
+            str=str" "a[i,j];
+        }
+        print str
+    }
+}' process/tmp4 > process/tmp4_trans
+
+sort -k 1 process/tmp4_trans > process/tmp4_trans_sorted
+
+
+cut -d ' ' -f 2- process/tmp4_trans_sorted > process/tmp5
+
+cut -d ' ' -f 1 process/tmp4_trans_sorted > process/tmp5_snp_sorted
+
+
+awk '
+{
+    for (i=1; i<=NF; i++)  {
+        a[NR,i] = $i
+    }
+}
+NF>p { p = NF }
+END {
+    for(j=1; j<=p; j++) {
+        str=a[1,j]
+        for(i=2; i<=NR; i++){
+            str=str" "a[i,j];
+        }
+        print str
+    }
+}' process/tmp5 > process/tmp5_trans
+
+echo "combining and sorting snps and beta"
+
+awk '
+{
+    for (i=1; i<=NF; i++)  {
+        a[NR,i] = $i
+    }
+}
+NF>p { p = NF }
+END {
+    for(j=1; j<=p; j++) {
+        str=a[1,j]
+        for(i=2; i<=NR; i++){
+            str=str" "a[i,j];
+        }
+        print str
+    }
+}' process/tmp2_snp > process/tmp2_snp_trans
+
+awk '
+{
+    for (i=1; i<=NF; i++)  {
+        a[NR,i] = $i
+    }
+}
+NF>p { p = NF }
+END {
+    for(j=1; j<=p; j++) {
+        str=a[1,j]
+        for(i=2; i<=NR; i++){
+            str=str" "a[i,j];
+        }
+        print str
+    }
+}' process/tmp2_beta > process/tmp2_beta_trans
+
+cat process/tmp2_snp_trans process/tmp2_beta_trans > process/tmp2_trans
+
+awk '
+{
+    for (i=1; i<=NF; i++)  {
+        a[NR,i] = $i
+    }
+}
+NF>p { p = NF }
+END {
+    for(j=1; j<=p; j++) {
+        str=a[1,j]
+        for(i=2; i<=NR; i++){
+            str=str" "a[i,j];
+        }
+        print str
+    }
+}' process/tmp2_trans > process/tmp2
+
+sort -k 1 process/tmp2 > process/tmp2_sorted
+
+cut -d ' ' -f 2 process/tmp2_sorted > process/tmp2_beta_sorted
+
+
+echo "Multiplying beta with japanese genotype"
+
+for i in {1..200}
+do
+beta=`awk -v var="$i" 'NR==var' process/tmp2_beta_sorted`
+awk -v var="$beta" -v var2="$i" -F" " '{$var2=var*$var2;print $var2}' process/tmp5_trans > process/temp$i
+done
+
+for i in {1..200}
+do
+awk '
+{
+    for (i=1; i<=NF; i++)  {
+        a[NR,i] = $i
+    }
+}
+NF>p { p = NF }
+END {
+    for(j=1; j<=p; j++) {
+        str=a[1,j]
+        for(i=2; i<=NR; i++){
+            str=str" "a[i,j];
+        }
+        print str
+    }
+}' process/temp$i > process/tmpy$i
+done
+
+rm process/tmp6
+
+for i in {1..200}
+do
+cat process/tmpy"$i" >> process/tmp6
+done
+
+paste -d ' ' process/tmp5_snp_sorted process/tmp6 > process/tmp7
+
+awk '
+{
+    for (i=1; i<=NF; i++)  {
+        a[NR,i] = $i
+    }
+}
+NF>p { p = NF }
+END {
+    for(j=1; j<=p; j++) {
+        str=a[1,j]
+        for(i=2; i<=NR; i++){
+            str=str" "a[i,j];
+        }
+        print str
+    }
+}' process/tmp7 > process/tmp7_trans
+
+paste -d ' ' process/tmp4_id process/tmp7_trans > process/tmp8
+
+rm process/tmpy* process/temp*
+
+echo "renaming IDs"
+
+head -1 process/tmp8 > process/tmp9_head
+sed '1d' process/tmp8 > process/tmp9_body
+
+cut -d ' ' -f 3- process/tmp9_body > process/tmp10
+rm process/tmp10_id
+cnt=`cat process/tmp10 | wc -l`
+for ((i=1;i<=cnt;i++))
+do
+echo "p$i p$i" >> process/tmp10_id
+done
+
+paste -d ' ' process/tmp10_id process/tmp10 > process/tmp11
+
+cat process/tmp9_head process/tmp11 > process/tmp12
+
+mv process/tmp12 output/japan_simple_new
+
+rm process/tmp*
+
+echo "simple logistic analysis done"
+
+echo "Cox regression analysis/ survival analysis"
+
+./script/cox_regression.script
+
+
